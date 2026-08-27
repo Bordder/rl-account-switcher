@@ -30,15 +30,15 @@ Download the latest installer from the [Releases](../../releases) page and run i
 
 ## How it works
 
-Adding an account uses Epic's own OAuth login, the same one the Epic launcher uses. The app keeps only the refresh token that login returns, encrypted locally, and never the password. Launching an account trades that token for a one-time exchange code and starts the game with it, so the Epic launcher is never modified or closed.
+Adding an account uses Epic's own OAuth login. The app keeps only the refresh token that login returns, encrypted locally. Launching an account trades that token for a one-time exchange code and starts the game with it, so the Epic launcher is never modified or closed.
 
-Ranks are read from rocketleague.tracker.network through a hidden browser window, which is why no API key is required. An account only shows ranks if its tracker profile is public.
+Ranks are read from rocketleague.tracker.network through a hidden browser window, which is why no API key is required.
 
 ## FAQ
 
 **Where is my password stored?**
 
-It isn't. Signing in returns a token from Epic, and only that token is saved, encrypted on your machine. The password is never written to disk and never seen by the app.
+It isn't. Signing in returns a token from Epic, and only that token is saved, encrypted on your machine.
 
 **Why won't an account's ranks load?**
 
@@ -54,7 +54,7 @@ It doesn't need to be running. The game itself has to have been installed throug
 
 **Can this get my account banned?**
 
-The game starts through the normal Easy Anti-Cheat path, exactly like a standard launch, so nothing is injected or spoofed in-game. The unofficial part is automating the Epic sign-in, which isn't something Epic permits. There have been no issues in practice, but it's an unofficial tool and you use it at your own risk.
+The game starts through the normal Easy Anti-Cheat path, exactly like a standard launch, so nothing is injected or spoofed in-game. The unofficial part is automating the Epic sign-in, which isn't something Epic permits. There have been no issues in practice, but use it at your own risk.
 
 ## Building from source
 
@@ -75,7 +75,7 @@ This is maintained in spare time and will keep getting updates if there's intere
 
 ## License
 
-All rights reserved. See [LICENSE.txt](LICENSE.txt). You may use the released build for personal use. You may not redistribute it, sell it, or present it as your own.
+Released under the [MIT License](LICENSE.txt). You are free to use, modify, and redistribute it, including in your own projects, provided the original copyright and license notice are retained.
 
 ## Credits
 
