@@ -1,0 +1,21 @@
+<Project>
+
+  <!-- Isolates this app from the parent StutterDoctor Directory.Build.props.
+       MSBuild uses the nearest Directory.Build.props walking up the tree and
+       stops here, so none of the "PC Performance Check" branding or the
+       LibreHardwareMonitor runtime settings leak into this project. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+
+    <Company>RL Account Switcher</Company>
+    <Product>RL Account Switcher</Product>
+    <AssemblyTitle>Rocket League Account Switcher</AssemblyTitle>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+</Project>

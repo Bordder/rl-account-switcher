@@ -1,0 +1,188 @@
+<ui:FluentWindow x:Class="RLSwitcher.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 mc:Ignorable="d"
+                 Title="Rocket League Account Switcher"
+                 Icon="pack://application:,,,/Assets/app.ico"
+                 Width="720" Height="640" MinWidth="560" MinHeight="480"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <ui:TitleBar Grid.Row="0" x:Name="AppTitleBar" Title="Rocket League Account Switcher">
+      <ui:TitleBar.Icon>
+        <ui:SymbolIcon Symbol="VehicleCar24" />
+      </ui:TitleBar.Icon>
+    </ui:TitleBar>
+
+    <!-- Toolbar -->
+    <Grid Grid.Row="1" Margin="16,4,16,8">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <StackPanel Grid.Column="0" VerticalAlignment="Center">
+        <TextBlock Text="Your accounts" FontSize="20" FontWeight="SemiBold" />
+        <TextBlock x:Name="SubtitleText" Text="" Opacity="0.6" FontSize="12" Margin="0,2,0,0" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+        <ui:Button Content="Add account" Icon="{ui:SymbolIcon PersonAdd24}"
+                   Appearance="Primary" Click="AddAccount_Click" Margin="0,0,8,0" />
+        <ui:Button Icon="{ui:SymbolIcon QuestionCircle24}" ToolTip="How to use"
+                   Click="Help_Click" Margin="0,0,8,0" />
+        <ui:Button Icon="{ui:SymbolIcon Settings24}" ToolTip="Settings" Click="Settings_Click" />
+      </StackPanel>
+    </Grid>
+
+    <!-- Missing-path warning -->
+    <ui:InfoBar Grid.Row="2" x:Name="PathWarning" Margin="16,4,16,4" IsOpen="False"
+                Severity="Warning" Title="Rocket League not found"
+                Message="Set the launch program path in Settings before you can play." />
+
+    <!-- Account list -->
+    <Grid Grid.Row="3" Margin="16,0,16,16">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ItemsControl x:Name="AccountsList">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Margin="0,0,0,10" CornerRadius="8" Background="Transparent" Cursor="Hand"
+                      ToolTip="Click for ranks and MMR"
+                      MouseLeftButtonUp="Card_Click" Tag="{Binding}"
+                      BorderBrush="{Binding IsActive, Converter={StaticResource ActiveBorderBrush}}"
+                      BorderThickness="{Binding IsActive, Converter={StaticResource ActiveThickness}}">
+                <ui:Card Padding="14">
+                  <StackPanel>
+                    <!-- Header -->
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+
+                      <Border Grid.Column="0" Width="46" Height="46" CornerRadius="23"
+                              VerticalAlignment="Center"
+                              Background="{Binding DisplayName, Converter={StaticResource AvatarBrush}}">
+                        <TextBlock Text="{Binding DisplayName, Converter={StaticResource Initial}}"
+                                   Foreground="White" FontSize="20" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+
+                      <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="{Binding DisplayName}" FontSize="16" FontWeight="SemiBold"
+                                     VerticalAlignment="Center" />
+                          <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="9" Background="#4C8DFF"
+                                  VerticalAlignment="Center"
+                                  Visibility="{Binding IsActive, Converter={StaticResource BoolVis}}">
+                            <TextBlock Text="ACTIVE" Foreground="White" FontSize="10" FontWeight="SemiBold" />
+                          </Border>
+                          <ui:SymbolIcon Symbol="ChevronDown24" FontSize="14" Opacity="0.5"
+                                         Margin="8,0,0,0" VerticalAlignment="Center"
+                                         RenderTransformOrigin="0.5,0.5">
+                            <ui:SymbolIcon.RenderTransform>
+                              <RotateTransform Angle="{Binding IsExpanded, Converter={StaticResource BoolAngle}}" />
+                            </ui:SymbolIcon.RenderTransform>
+                          </ui:SymbolIcon>
+                        </StackPanel>
+                        <TextBlock Text="{Binding LastUsedUtc, Converter={StaticResource LastUsed}}"
+                                   Opacity="0.5" FontSize="12" Margin="0,2,0,0" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:Button Content="Play" Appearance="Success" Icon="{ui:SymbolIcon Play24}"
+                                   Click="Play_Click" Tag="{Binding}" Margin="0,0,6,0" />
+                        <ui:Button Icon="{ui:SymbolIcon Edit24}" ToolTip="Rename"
+                                   Click="Edit_Click" Tag="{Binding}" Margin="0,0,4,0" />
+                        <ui:Button Icon="{ui:SymbolIcon Delete24}" ToolTip="Remove"
+                                   Click="Delete_Click" Tag="{Binding}" />
+                      </StackPanel>
+                    </Grid>
+
+                    <!-- Inline stats -->
+                    <StackPanel Margin="0,12,0,0"
+                                Visibility="{Binding IsExpanded, Converter={StaticResource BoolVis}}">
+                      <StackPanel Orientation="Horizontal"
+                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolVis}}">
+                        <ui:ProgressRing IsIndeterminate="True" Width="18" Height="18" />
+                        <TextBlock Text="Loading ranks" Opacity="0.7" Margin="10,0,0,0"
+                                   VerticalAlignment="Center" />
+                      </StackPanel>
+
+                      <TextBlock Text="{Binding Error}" Opacity="0.7" TextWrapping="Wrap"
+                                 Visibility="{Binding HasError, Converter={StaticResource BoolVis}}" />
+
+                      <ItemsControl ItemsSource="{Binding Ranks}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border CornerRadius="8" Padding="10" Margin="0,0,0,6" Background="#18888888">
+                              <Grid>
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="Auto" />
+                                  <ColumnDefinition Width="*" />
+                                  <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#4C8DFF" CornerRadius="6"
+                                        Padding="9,3" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding Mode}" Foreground="White"
+                                             FontWeight="SemiBold" FontSize="13" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding TierDisplay}" FontSize="15" FontWeight="SemiBold" />
+                                  <TextBlock Text="{Binding Division}" FontSize="12" Opacity="0.6"
+                                             Visibility="{Binding HasDivision, Converter={StaticResource BoolVis}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding MmrDisplay}" FontSize="18" FontWeight="Bold"
+                                             Foreground="#4C8DFF" TextAlignment="Right" />
+                                  <TextBlock Text="MMR" FontSize="10" Opacity="0.55" TextAlignment="Right" />
+                                </StackPanel>
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                        <ui:Button Content="Refresh" Appearance="Secondary" Padding="8,3"
+                                   FontSize="12" Click="RefreshStats_Click" Tag="{Binding}" Margin="0,0,8,0" />
+                        <ui:Button Content="Open full profile" Appearance="Secondary" Padding="8,3"
+                                   FontSize="12" Click="OpenProfile_Click" Tag="{Binding}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </ui:Card>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <StackPanel x:Name="EmptyPanel" VerticalAlignment="Center" HorizontalAlignment="Center"
+                  Visibility="Collapsed">
+        <ui:SymbolIcon Symbol="PersonAvailable24" FontSize="48" Opacity="0.4"
+                       HorizontalAlignment="Center" />
+        <TextBlock Text="No accounts yet" FontSize="18" FontWeight="SemiBold"
+                   HorizontalAlignment="Center" Margin="0,10,0,4" />
+        <TextBlock Text="Click &quot;Add account&quot; and log into an Epic account once."
+                   Opacity="0.6" HorizontalAlignment="Center" TextAlignment="Center" />
+      </StackPanel>
+    </Grid>
+
+    <!-- Hidden fetcher for Tracker Network stats -->
+    <wv2:WebView2 Grid.Row="3" x:Name="StatsWeb" Width="1" Height="1"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" IsHitTestVisible="False" />
+  </Grid>
+</ui:FluentWindow>

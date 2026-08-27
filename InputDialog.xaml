@@ -1,0 +1,29 @@
+<ui:FluentWindow x:Class="RLSwitcher.InputDialog"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Input" Width="420" Height="220"
+                 Icon="pack://application:,,,/Assets/app.ico"
+                 ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <ui:TitleBar Grid.Row="0" x:Name="TitleBarControl" Title="Input" />
+
+    <StackPanel Grid.Row="1" Margin="20,10,20,0" VerticalAlignment="Center">
+      <TextBlock x:Name="PromptText" Text="" Margin="0,0,0,8" TextWrapping="Wrap" />
+      <ui:TextBox x:Name="ValueBox" />
+      <PasswordBox x:Name="PasswordBoxControl" Visibility="Collapsed" Padding="8,6" FontSize="14" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20">
+      <ui:Button Content="Cancel" Click="Cancel_Click" Margin="0,0,8,0" IsCancel="True" />
+      <ui:Button Content="OK" Appearance="Primary" Click="Ok_Click" IsDefault="True" />
+    </StackPanel>
+  </Grid>
+</ui:FluentWindow>

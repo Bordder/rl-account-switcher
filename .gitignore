@@ -1,0 +1,15 @@
+# Build output
+bin/
+obj/
+publish/
+
+# Generated during installer build (from installer/license.template.rtf)
+installer/license.rtf
+
+# IDE / user
+.vs/
+*.user
+*.suo
+
+# Local-only writing guide, not for the public repo
+CLAUDE.md

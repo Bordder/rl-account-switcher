@@ -1,0 +1,100 @@
+<ui:FluentWindow x:Class="RLSwitcher.OnboardingWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Welcome" Width="620" Height="600"
+                 Icon="pack://application:,,,/Assets/app.ico"
+                 ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <ui:TitleBar Grid.Row="0" x:Name="OnbTitleBar" Title="Setup">
+      <ui:TitleBar.Icon>
+        <ui:SymbolIcon Symbol="VehicleCar24" />
+      </ui:TitleBar.Icon>
+    </ui:TitleBar>
+
+    <Grid Grid.Row="1" Margin="28,10,28,0">
+
+      <!-- Step 0: Welcome -->
+      <StackPanel x:Name="StepWelcome">
+        <TextBlock Text="Rocket League Account Switcher" FontSize="24" FontWeight="Bold" />
+        <TextBlock Opacity="0.75" TextWrapping="Wrap" Margin="0,10,0,0"
+                   Text="Launch Rocket League on any Epic account with one click. No logging out and back in." />
+
+        <TextBlock Text="How it works" FontSize="16" FontWeight="SemiBold" Margin="0,22,0,8" />
+        <StackPanel>
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                     Text="•  You add each account once by signing into Epic. A browser opens right inside the app." />
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                     Text="•  We store a secure token for that account (encrypted on your PC). Your password is never seen or saved." />
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"
+                     Text="•  Hit Play on any account and Rocket League boots straight into it. The Epic launcher is never touched." />
+        </StackPanel>
+
+        <ui:InfoBar Margin="0,18,0,0" IsOpen="True" Severity="Success" Title="Two quick steps"
+                    Message="Next we'll find your Rocket League install, then add your first account." />
+      </StackPanel>
+
+      <!-- Step 1: Locate game -->
+      <StackPanel x:Name="StepGame" Visibility="Collapsed">
+        <TextBlock Text="Find Rocket League" FontSize="22" FontWeight="Bold" />
+        <TextBlock Opacity="0.75" TextWrapping="Wrap" Margin="0,10,0,0"
+                   Text="We need your Rocket League install so we can launch the game. This is usually detected automatically." />
+
+        <TextBlock Text="Rocket League launch program (usually Launcher.exe)" Margin="0,20,0,4" />
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <ui:TextBox Grid.Column="0" x:Name="ExeBox" />
+          <ui:Button Grid.Column="1" Content="Browse" Margin="6,0,0,0" Click="Browse_Click" />
+          <ui:Button Grid.Column="2" Content="Detect" Margin="6,0,0,0" Click="Detect_Click" />
+        </Grid>
+        <ui:InfoBar x:Name="GameStatus" Margin="0,14,0,0" IsOpen="False" />
+      </StackPanel>
+
+      <!-- Step 2: Add first account -->
+      <StackPanel x:Name="StepAccount" Visibility="Collapsed">
+        <TextBlock Text="Add your first account" FontSize="22" FontWeight="Bold" />
+        <TextBlock Opacity="0.75" TextWrapping="Wrap" Margin="0,10,0,14"
+                   Text="A secure in-app browser opens, already logged out, so you can sign into any account. We store a token for it. You can skip this and add accounts later." />
+
+        <ui:Button Content="Log in and add account" Icon="{ui:SymbolIcon PersonAdd24}"
+                   Appearance="Primary" Click="AddViaLogin_Click" />
+        <ui:InfoBar x:Name="AccountStatus" Margin="0,16,0,0" IsOpen="False" />
+      </StackPanel>
+
+      <!-- Step 3: Done -->
+      <StackPanel x:Name="StepDone" Visibility="Collapsed">
+        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="52"
+                       Foreground="#43A047" HorizontalAlignment="Left" />
+        <TextBlock Text="You're all set" FontSize="24" FontWeight="Bold" Margin="0,10,0,0" />
+        <TextBlock Opacity="0.75" TextWrapping="Wrap" Margin="0,10,0,0"
+                   Text="Your accounts show up as cards on the main screen." />
+        <StackPanel Margin="0,16,0,0">
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6" Text="•  Play launches Rocket League on that account." />
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6" Text="•  Add account runs the login again for your smurfs or alts." />
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6" Text="•  The pencil and trash icons rename or remove an account." />
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,6" Text="•  Settings lets you set a master password so accounts move between PCs." />
+        </StackPanel>
+      </StackPanel>
+
+    </Grid>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="28,0,28,20">
+      <ui:ProgressRing x:Name="Busy" IsIndeterminate="True" Width="22" Height="22"
+                       Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,12,0" />
+      <ui:Button x:Name="BackButton" Content="Back" Click="Back_Click"
+                 Margin="0,0,8,0" Visibility="Collapsed" />
+      <ui:Button x:Name="NextButton" Content="Next" Appearance="Primary" Click="Next_Click" />
+    </StackPanel>
+  </Grid>
+</ui:FluentWindow>

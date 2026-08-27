@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="Rocket League Account Switcher"
+           Manufacturer="$(var.Author)"
+           Version="$(var.Version)"
+           UpgradeCode="12504C6D-100D-43BC-8F74-0576074CAD40"
+           Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon" SourceFile="..\Assets\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+
+    <!-- License page shown during install -->
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="RL Account Switcher" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ShortcutFolder" Name="RL Account Switcher" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="Rocket League Account Switcher" Level="1">
+      <Component Directory="INSTALLFOLDER">
+        <File Id="AppExe" Source="..\publish\app\RLSwitcher.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut" Directory="ShortcutFolder"
+                    Name="Rocket League Account Switcher"
+                    WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="yes" />
+        </File>
+      </Component>
+      <Component Directory="ShortcutFolder" Guid="*">
+        <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\RLSwitcher" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </Feature>
+  </Package>
+</Wix>
