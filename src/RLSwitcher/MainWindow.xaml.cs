@@ -38,6 +38,25 @@ public partial class MainWindow
         if (!_settings.OnboardingComplete || string.IsNullOrEmpty(_settings.RocketLeagueExePath))
             RunOnboarding();
         Refresh();
+        _ = CheckForUpdatesAsync();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var current = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version
+                          ?? new Version(0, 0, 0, 0);
+            var info = await UpdateChecker.CheckAsync(current);
+            if (info is null) return;
+
+            var choice = System.Windows.MessageBox.Show(this,
+                $"{info.Tag} is out. You're on {current.ToString(3)}.\n\nOpen the download page?",
+                "Update available", MessageBoxButton.YesNo, MessageBoxImage.Information);
+            if (choice == MessageBoxResult.Yes && !string.IsNullOrEmpty(info.PageUrl))
+                Process.Start(new ProcessStartInfo(info.PageUrl) { UseShellExecute = true });
+        }
+        catch { /* update check is best-effort */ }
     }
 
     private void RunOnboarding()
