@@ -75,7 +75,7 @@ This is maintained in spare time and will keep getting updates if there's intere
 
 ## License
 
-Released under the [MIT License](LICENSE.txt). You are free to use, modify, and redistribute it, including in your own projects, provided the original copyright and license notice are retained.
+Released under the [MIT License](LICENSE). You are free to use, modify, and redistribute it, including in your own projects, provided the original copyright and license notice are retained.
 
 ## Credits
 
