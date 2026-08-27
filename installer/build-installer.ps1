@@ -50,20 +50,8 @@ $template = Get-Content (Join-Path $here 'license.template.rtf') -Raw
 $license = $template.Replace('@@AUTHOR@@', $Author).Replace('@@YEAR@@', "$year")
 Set-Content -Path (Join-Path $here 'license.rtf') -Value $license -Encoding Ascii
 
-# Plain-text copy for the repo / app folder.
-$plain = @"
-Rocket League Account Switcher
-End User License Agreement
-
-Copyright (c) $year $Author. All rights reserved.
-
-This software is licensed, not sold, for personal non-commercial use only.
-You may not copy, distribute, sell, sublicense, reverse engineer, modify, or
-claim it as your own work. The software is provided "AS IS" without warranty
-of any kind. It is an unofficial tool and is not affiliated with Epic Games or
-Psyonix; all trademarks belong to their respective owners.
-"@
-Set-Content -Path (Join-Path $root 'LICENSE.txt') -Value $plain -Encoding utf8
+# The repo's LICENSE file (MIT) is the source of truth; the script no longer
+# writes its own copy.
 
 # 3. Compile MSI -------------------------------------------------------------
 Write-Host "Building MSI..." -ForegroundColor Cyan
