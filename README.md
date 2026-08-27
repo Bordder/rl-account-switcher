@@ -62,7 +62,7 @@ You'll need the .NET 10 SDK, plus the WiX 5 CLI tool to build the installer.
 
 ```powershell
 # run the app
-dotnet run
+dotnet run --project src/RLSwitcher
 
 # build the installer (publishes, generates the license, compiles the MSI)
 cd installer
@@ -80,3 +80,7 @@ All rights reserved. See [LICENSE.txt](LICENSE.txt). You may use the released bu
 ## Credits
 
 The account login is based on the OAuth approach from [Slipstream](https://github.com/jun-eau/Slipstream), and the Rocket League API details draw on [AeonLucid's RocketLeaguePublic](https://github.com/AeonLucid/RocketLeaguePublic).
+
+---
+
+<sub>Coded with Claude Opus 4.8.</sub>

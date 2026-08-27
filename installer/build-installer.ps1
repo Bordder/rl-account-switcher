@@ -31,7 +31,7 @@ if (-not (Test-Path $dotnet)) { $dotnet = (Get-Command dotnet).Source }
 # 1. Publish -----------------------------------------------------------------
 if (-not $SkipPublish) {
     Write-Host "Publishing app..." -ForegroundColor Cyan
-    & $dotnet publish (Join-Path $root 'RLSwitcher.csproj') `
+    & $dotnet publish (Join-Path $root 'src\RLSwitcher\RLSwitcher.csproj') `
         -c Release -r win-x64 --self-contained true `
         -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
         -p:DebugType=none -p:DebugSymbols=false `

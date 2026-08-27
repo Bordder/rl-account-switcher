@@ -11,7 +11,7 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="AppIcon" SourceFile="..\Assets\app.ico" />
+    <Icon Id="AppIcon" SourceFile="..\src\RLSwitcher\Assets\app.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
 
     <!-- License page shown during install -->
