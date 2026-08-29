@@ -27,13 +27,13 @@
 
     <Feature Id="Main" Title="Rocket League Account Switcher" Level="1">
       <Component Directory="INSTALLFOLDER">
-        <File Id="AppExe" Source="..\publish\app\RLSwitcher.exe" KeyPath="yes">
-          <Shortcut Id="StartMenuShortcut" Directory="ShortcutFolder"
-                    Name="Rocket League Account Switcher"
-                    WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" Advertise="yes" />
-        </File>
+        <File Id="AppExe" Source="..\publish\app\RLSwitcher.exe" KeyPath="yes" />
       </Component>
       <Component Directory="ShortcutFolder" Guid="*">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="Rocket League Account Switcher"
+                  Target="[#AppExe]"
+                  WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
         <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\RLSwitcher" Name="installed"
                        Type="integer" Value="1" KeyPath="yes" />
