@@ -23,8 +23,20 @@ public sealed class Account
     /// <summary>True once a refresh token for this account has been stored in the vault.</summary>
     public bool HasToken { get; set; }
 
+    /// <summary>
+    /// Extra command-line args appended for this account only, after the global
+    /// <see cref="AppSettings.ExtraLaunchArgs"/>. e.g. "-nomovie -windowed".
+    /// </summary>
+    public string? LaunchArgs { get; set; }
+
     public DateTimeOffset AddedUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastUsedUtc { get; set; }
+
+    /// <summary>Number of times the game was launched into this account.</summary>
+    public int LaunchCount { get; set; }
+
+    /// <summary>Accumulated in-game time, in seconds, measured across launches.</summary>
+    public long TotalPlaySeconds { get; set; }
 
     /// <summary>What the avatar and lists show. Falls back to the Epic name.</summary>
     [JsonIgnore]

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using RLSwitcher.Models;
 using RLSwitcher.Services;
+using Wpf.Ui;
 
 namespace RLSwitcher;
 
@@ -17,6 +18,9 @@ public partial class MainWindow
     {
         InitializeComponent();
         AppPaths.EnsureCreated();
+        var snackbar = new SnackbarService();
+        snackbar.SetSnackbarPresenter(RootSnackbar);
+        Notify.UseSnackbar(snackbar);
         _settings = Store.LoadSettings();
         foreach (var a in Store.LoadAccounts()) _vms.Add(new AccountVM(a));
         AccountsList.ItemsSource = _vms;
@@ -50,13 +54,50 @@ public partial class MainWindow
             var info = await UpdateChecker.CheckAsync(current);
             if (info is null) return;
 
-            var choice = System.Windows.MessageBox.Show(this,
+            // If the release ships an MSI, install it in place: download, run the
+            // installer, and close so it can replace the running files. The user
+            // just reopens the app afterwards. No MSI (or install fails) falls back
+            // to opening the download page.
+            if (!string.IsNullOrEmpty(info.MsiUrl))
+            {
+                var go = await Notify.ConfirmAsync("Update available",
+                    $"{info.Tag} is out. You're on {current.ToString(3)}.\n\n" +
+                    "Download and install it now? RLSwitcher will close while the installer runs, then you can reopen it.",
+                    confirmText: "Update now", cancelText: "Later");
+                if (!go) return;
+
+                try
+                {
+                    Notify.Toast("Updating", "Downloading the installer…");
+                    if (await UpdateChecker.DownloadAndRunAsync(info))
+                    {
+                        System.Windows.Application.Current.Shutdown();
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn("Auto-update failed; falling back to the download page.", ex);
+                    await Notify.InfoAsync("Update", "Couldn't install automatically: " + ex.Message +
+                        "\n\nOpening the download page instead.");
+                    OpenUrl(info.PageUrl);
+                }
+                return;
+            }
+
+            var open = await Notify.ConfirmAsync("Update available",
                 $"{info.Tag} is out. You're on {current.ToString(3)}.\n\nOpen the download page?",
-                "Update available", MessageBoxButton.YesNo, MessageBoxImage.Information);
-            if (choice == MessageBoxResult.Yes && !string.IsNullOrEmpty(info.PageUrl))
-                Process.Start(new ProcessStartInfo(info.PageUrl) { UseShellExecute = true });
+                confirmText: "Open page", cancelText: "Later");
+            if (open) OpenUrl(info.PageUrl);
         }
-        catch { /* update check is best-effort */ }
+        catch (Exception ex) { Log.Warn("Update check failed.", ex); }
+    }
+
+    private static void OpenUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (Exception ex) { Log.Warn("Could not open URL: " + url, ex); }
     }
 
     private void RunOnboarding()
@@ -88,7 +129,7 @@ public partial class MainWindow
 
     // --- Add ---
 
-    private void AddAccount_Click(object sender, RoutedEventArgs e)
+    private async void AddAccount_Click(object sender, RoutedEventArgs e)
     {
         var login = new LoginWindow { Owner = this };
         if (login.ShowDialog() != true || login.Result is null) return;
@@ -96,7 +137,7 @@ public partial class MainWindow
         var auth = login.Result;
         if (_vms.Any(v => v.Account.EpicAccountId == auth.AccountId))
         {
-            Warn($"\"{auth.DisplayName}\" is already in the switcher.");
+            await Notify.InfoAsync("Already added", $"\"{auth.DisplayName}\" is already in the switcher.");
             return;
         }
 
@@ -116,13 +157,15 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            Warn("Could not save the login securely: " + ex.Message);
+            Log.Error("Could not save a new login to the vault.", ex);
+            await Notify.InfoAsync("Couldn't save", "Could not save the login securely: " + ex.Message);
             return;
         }
 
         _vms.Add(new AccountVM(account));
         Persist();
         Refresh();
+        Notify.Success("Account added", $"{account.DisplayName} is ready to play.");
     }
 
     // --- Play ---
@@ -134,7 +177,7 @@ public partial class MainWindow
 
         if (string.IsNullOrEmpty(_settings.RocketLeagueExePath) || !File.Exists(_settings.RocketLeagueExePath))
         {
-            Warn("Set the path to RocketLeague.exe in Settings first.");
+            await Notify.InfoAsync("Path needed", "Set the path to RocketLeague.exe in Settings first.");
             return;
         }
 
@@ -148,9 +191,22 @@ public partial class MainWindow
             Persist();
             vm.RaiseModelChanged();
             Refresh();
+
+            Notify.Success("Launching", $"Starting Rocket League as {vm.Account.DisplayName}.");
+
+            // Count in-game time in the background; persist and refresh when the game exits.
+            PlaytimeTracker.Track(vm.Account, () => Dispatcher.Invoke(() =>
+            {
+                Persist();
+                vm.RaiseModelChanged();
+            }));
         }
-        catch (LaunchException ex) { Warn(ex.Message); }
-        catch (Exception ex) { Warn("Launch failed: " + ex.Message); }
+        catch (LaunchException ex) { await Notify.InfoAsync("Can't launch", ex.Message); }
+        catch (Exception ex)
+        {
+            Log.Error("Launch failed.", ex);
+            await Notify.InfoAsync("Launch failed", ex.Message);
+        }
     }
 
     // --- Inline stats ---
@@ -176,12 +232,7 @@ public partial class MainWindow
     {
         var vm = VmFrom(sender);
         if (vm is null) return;
-        try
-        {
-            Process.Start(new ProcessStartInfo(RlStats.ProfilePageUrl(vm.Account.EpicDisplayName))
-            { UseShellExecute = true });
-        }
-        catch { /* best effort */ }
+        OpenUrl(RlStats.ProfilePageUrl(vm.Account.EpicDisplayName));
     }
 
     private async Task FetchStatsAsync(AccountVM vm)
@@ -219,23 +270,23 @@ public partial class MainWindow
         var vm = VmFrom(sender);
         if (vm is null) return;
 
-        var name = InputDialog.Ask(this, "Rename account", "Nickname (blank = Epic name):", vm.Account.Label);
-        if (name is null) return;
+        if (!EditAccountDialog.Show(this, vm.Account, out var nickname, out var launchArgs)) return;
 
-        vm.Account.Label = name.Trim();
+        vm.Account.Label = nickname;
+        vm.Account.LaunchArgs = launchArgs;
         vm.RaiseModelChanged();
         Persist();
     }
 
-    private void Delete_Click(object sender, RoutedEventArgs e)
+    private async void Delete_Click(object sender, RoutedEventArgs e)
     {
         var vm = VmFrom(sender);
         if (vm is null) return;
 
-        var ok = System.Windows.MessageBox.Show(this,
+        var ok = await Notify.ConfirmAsync("Remove account",
             $"Remove \"{vm.Account.DisplayName}\" from the switcher? This does not touch the Epic account itself.",
-            "Remove account", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (ok != MessageBoxResult.Yes) return;
+            confirmText: "Remove", cancelText: "Keep");
+        if (!ok) return;
 
         try
         {
@@ -243,7 +294,7 @@ public partial class MainWindow
             var v = _vault.Current;
             if (v is not null) { v.Remove(vm.Account.Id); v.Save(); }
         }
-        catch { /* removing the local record is enough */ }
+        catch (Exception ex) { Log.Warn($"Could not remove '{vm.Account.DisplayName}' token from vault (local record removed anyway).", ex); }
 
         _vms.Remove(vm);
         Persist();
@@ -255,7 +306,14 @@ public partial class MainWindow
         var win = new SettingsWindow(_settings, _vault) { Owner = this };
         win.ShowDialog();
         _settings = Store.LoadSettings();
+        if (win.AccountsChanged) ReloadAccounts();
         Refresh();
+    }
+
+    private void ReloadAccounts()
+    {
+        _vms.Clear();
+        foreach (var a in Store.LoadAccounts()) _vms.Add(new AccountVM(a));
     }
 
     private void Help_Click(object sender, RoutedEventArgs e) => RunOnboarding();
@@ -281,8 +339,4 @@ public partial class MainWindow
         => (sender as FrameworkElement)?.Tag as AccountVM;
 
     private void Persist() => Store.SaveAccounts(_vms.Select(v => v.Account));
-
-    private void Warn(string message)
-        => System.Windows.MessageBox.Show(this, message, "Rocket League Account Switcher",
-            MessageBoxButton.OK, MessageBoxImage.Information);
 }

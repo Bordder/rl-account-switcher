@@ -67,13 +67,18 @@ public static class LaunchService
         psi.ArgumentList.Add("-epicusername=");
         psi.ArgumentList.Add($"-epicuserid={account.EpicAccountId}");
 
+        // Global args first, then this account's own args (account overrides win by
+        // coming later on the command line).
         foreach (var extra in SplitArgs(settings.ExtraLaunchArgs))
+            psi.ArgumentList.Add(extra);
+        foreach (var extra in SplitArgs(account.LaunchArgs))
             psi.ArgumentList.Add(extra);
 
         var proc = Process.Start(psi)
             ?? throw new LaunchException("Failed to start Rocket League.");
 
         account.LastUsedUtc = DateTimeOffset.UtcNow;
+        account.LaunchCount++;
         return proc;
     }
 

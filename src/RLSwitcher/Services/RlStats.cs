@@ -10,15 +10,36 @@ public sealed record RankInfo(string Mode, string Tier, string Division, int Mmr
     public bool HasDivision => !string.IsNullOrEmpty(Division);
 }
 
+/// <summary>Why a stats lookup ended the way it did.</summary>
+public enum StatsStatus
+{
+    /// <summary>Ranks were read successfully.</summary>
+    Ok,
+    /// <summary>The tracker answered, but this account has no public/tracked profile.</summary>
+    Private,
+    /// <summary>The tracker itself couldn't be reached or refused to answer (timeout, block, network).</summary>
+    SourceDown,
+}
+
 /// <summary>Outcome of a stats lookup.</summary>
 public sealed class StatsResult
 {
     public bool Ok { get; init; }
+    public StatsStatus Status { get; init; } = StatsStatus.SourceDown;
     public string? Error { get; init; }
     public List<RankInfo> Ranks { get; init; } = new();
     public DateTimeOffset FetchedUtc { get; init; } = DateTimeOffset.UtcNow;
 
-    public static StatsResult Fail(string error) => new() { Ok = false, Error = error };
+    /// <summary>The profile is readable but empty/private (distinct from the tracker being unreachable).</summary>
+    public static StatsResult Private(string error)
+        => new() { Ok = false, Status = StatsStatus.Private, Error = error };
+
+    /// <summary>The tracker couldn't be reached or blocked the request.</summary>
+    public static StatsResult Down(string error)
+        => new() { Ok = false, Status = StatsStatus.SourceDown, Error = error };
+
+    // Back-compat helper: a plain failure defaults to "source down".
+    public static StatsResult Fail(string error) => Down(error);
 }
 
 /// <summary>
@@ -45,12 +66,12 @@ public static class RlStats
             var root = doc.RootElement;
 
             if (root.TryGetProperty("errors", out var errs) && errs.ValueKind == JsonValueKind.Array && errs.GetArrayLength() > 0)
-                return StatsResult.Fail("No public tracker profile for this account.");
+                return StatsResult.Private("No public tracker profile for this account.");
 
             if (!root.TryGetProperty("data", out var data) ||
                 !data.TryGetProperty("segments", out var segments) ||
                 segments.ValueKind != JsonValueKind.Array)
-                return StatsResult.Fail("Could not read stats for this account.");
+                return StatsResult.Down("The tracker returned an unexpected response. It may have changed or be having trouble.");
 
             // Always emit all three rows; fill from the matching segment when the
             // account has played that playlist, otherwise leave it as Unranked.
@@ -83,13 +104,13 @@ public static class RlStats
             // If none of the three playlists existed at all, the profile is likely
             // empty/private rather than just missing 1v1.
             if (!sawProfile && segments.GetArrayLength() == 0)
-                return StatsResult.Fail("No public tracker profile for this account.");
+                return StatsResult.Private("No public tracker profile for this account.");
 
-            return new StatsResult { Ok = true, Ranks = ranks };
+            return new StatsResult { Ok = true, Status = StatsStatus.Ok, Ranks = ranks };
         }
         catch (Exception ex)
         {
-            return StatsResult.Fail("Couldn't parse stats: " + ex.Message);
+            return StatsResult.Down("Couldn't parse the tracker response: " + ex.Message);
         }
     }
 
