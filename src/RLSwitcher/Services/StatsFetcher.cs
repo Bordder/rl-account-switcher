@@ -53,7 +53,10 @@ public sealed class StatsFetcher
                 _web.CoreWebView2.Navigate(RlStats.ProfilePageUrl(epicDisplayName));
                 var finished = await Task.WhenAny(tcs.Task, Task.Delay(25000));
                 if (finished != tcs.Task)
-                    return StatsResult.Fail("Timed out. The profile may be private, or the tracker is blocking requests.");
+                {
+                    Log.Warn($"Stats: timed out reading tracker profile for '{epicDisplayName}'.");
+                    return StatsResult.Down("The tracker didn't respond in time. It may be down or blocking requests right now. Try again shortly.");
+                }
                 return RlStats.Parse(tcs.Task.Result);
             }
             finally
@@ -63,7 +66,8 @@ public sealed class StatsFetcher
         }
         catch (Exception ex)
         {
-            return StatsResult.Fail("Could not load stats: " + ex.Message);
+            Log.Warn($"Stats: fetch failed for '{epicDisplayName}'.", ex);
+            return StatsResult.Down("Could not reach the tracker: " + ex.Message);
         }
         finally
         {

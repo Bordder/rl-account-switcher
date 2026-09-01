@@ -2,7 +2,7 @@
 
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue)
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4)
-![License](https://img.shields.io/badge/license-proprietary-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 A Windows app for managing multiple Epic Games accounts and launching Rocket League straight into whichever one you pick, without signing in and out of the Epic launcher each time.
 
@@ -13,7 +13,11 @@ This is an unofficial tool with no connection to Epic Games or Psyonix. Only use
 - One-click launch into any saved account
 - Add accounts through an in-app Epic sign-in; your password is never stored
 - 1v1, 2v2 and 3v3 ranks with MMR shown per account
+- Per-account launch arguments, plus a running count and total in-game time
+- Launch straight from a shortcut or Stream Deck: `RLSwitcher.exe --account "Smurf2"`
+- Encrypted backup file you can export and import to move every account at once
 - Logins held as encrypted tokens on your PC, with an optional master password for moving them between machines
+- Updates download and install themselves; you just reopen the app afterwards
 - The account you launched most recently is marked as active
 
 ## Requirements
@@ -32,7 +36,22 @@ Download the latest installer from the [Releases](../../releases) page and run i
 
 Adding an account uses Epic's own OAuth login. The app keeps only the refresh token that login returns, encrypted locally. Launching an account trades that token for a one-time exchange code and starts the game with it, so the Epic launcher is never modified or closed.
 
-Ranks are read from rocketleague.tracker.network through a hidden browser window, which is why no API key is required.
+Ranks are read from rocketleague.tracker.network through a hidden browser window, which is why no API key is required. If the tracker is unreachable or blocking requests, the app says so, distinct from an account whose profile is simply private.
+
+## Command line
+
+Launch an account without opening the window, so you can bind it to a Stream Deck button, a desktop shortcut, or AutoHotkey:
+
+```
+RLSwitcher.exe --account "Smurf2"
+RLSwitcher.exe --list
+```
+
+The name matches a nickname or Epic display name, case-insensitive. If the vault has a master password, you'll be asked for it once.
+
+## Backups
+
+Settings has Export and Import. Export writes every account and its login into a single encrypted file under a password you choose, separate from the vault's master password. Import reads it back on any PC and skips accounts already present. Keep the file and its password together, since neither is useful alone.
 
 ## FAQ
 
@@ -47,6 +66,10 @@ Its tracker profile is private, or the account has never been tracked. Ranks com
 **An account says its login expired.**
 
 Epic tokens don't last forever. Add the account again with a single sign-in and it's restored.
+
+**How do updates work?**
+
+When a newer release exists, the app offers to download and run its installer, then closes so the files can be replaced. Reopen it and you're on the new version. Windows shows the usual installer prompt (and SmartScreen, since the build isn't signed). If anything fails it falls back to opening the download page.
 
 **Does the Epic launcher need to be installed or running?**
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 
@@ -62,6 +63,43 @@ public static class UpdateChecker
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Downloads the release MSI to a temp file, launches it with msiexec, and returns
+    /// true so the caller can exit the app (the installer replaces the running files).
+    /// The download URL must be a github.com asset ending in .msi; anything else is
+    /// refused rather than executed. Throws on network/IO failure.
+    /// </summary>
+    public static async Task<bool> DownloadAndRunAsync(UpdateInfo info)
+    {
+        if (string.IsNullOrEmpty(info.MsiUrl))
+            throw new InvalidOperationException("This release has no installer to download.");
+
+        var uri = new Uri(info.MsiUrl);
+        var hostOk = uri.Host.EndsWith("github.com", StringComparison.OrdinalIgnoreCase)
+                     || uri.Host.EndsWith("githubusercontent.com", StringComparison.OrdinalIgnoreCase);
+        if (uri.Scheme != Uri.UriSchemeHttps || !hostOk ||
+            !uri.AbsolutePath.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The installer URL isn't a trusted GitHub .msi asset; not downloading it.");
+
+        var dest = Path.Combine(Path.GetTempPath(), $"RLSwitcher-{info.Tag}.msi");
+
+        using (var req = new HttpRequestMessage(HttpMethod.Get, uri))
+        {
+            req.Headers.UserAgent.ParseAdd("RLSwitcher-UpdateCheck");
+            using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            resp.EnsureSuccessStatusCode();
+            await using var src = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            await using var fs = File.Create(dest);
+            await src.CopyToAsync(fs).ConfigureAwait(false);
+        }
+
+        Log.Info($"Downloaded update {info.Tag} to {dest}; launching installer.");
+        // /passive shows a progress bar but needs no clicks; the app must exit so the
+        // MSI can overwrite its files, then it relaunches (installer-defined).
+        Process.Start(new ProcessStartInfo("msiexec", $"/i \"{dest}\" /passive") { UseShellExecute = true });
+        return true;
     }
 
     private static Version Normalize(Version v)

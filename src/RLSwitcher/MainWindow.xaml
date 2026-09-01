@@ -184,5 +184,8 @@
     <!-- Hidden fetcher for Tracker Network stats -->
     <wv2:WebView2 Grid.Row="3" x:Name="StatsWeb" Width="1" Height="1"
                   HorizontalAlignment="Left" VerticalAlignment="Bottom" IsHitTestVisible="False" />
+
+    <!-- Transient toasts (success / info) -->
+    <ui:SnackbarPresenter Grid.Row="0" Grid.RowSpan="4" x:Name="RootSnackbar" />
   </Grid>
 </ui:FluentWindow>
