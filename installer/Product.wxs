@@ -13,10 +13,24 @@
 
     <Icon Id="AppIcon" SourceFile="..\src\RLSwitcher\Assets\app.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/Bordder/rl-account-switcher" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Bordder/rl-account-switcher" />
 
     <!-- License page shown during install -->
     <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
-    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+    <!-- Feature-tree UI: keeps the license and folder-choice steps, and adds a
+         Custom Setup step where the desktop shortcut can be turned off. -->
+    <ui:WixUI Id="WixUI_FeatureTree" />
+
+    <!-- "Launch the app" checkbox on the final page, ticked by default. -->
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Rocket League Account Switcher now" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <CustomAction Id="LaunchApplication" FileRef="AppExe" ExeCommand="" Return="asyncNoWait" Impersonate="yes" />
+    <UI>
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication"
+               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed" />
+    </UI>
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="RL Account Switcher" />
@@ -24,8 +38,11 @@
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="ShortcutFolder" Name="RL Account Switcher" />
     </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder" />
 
-    <Feature Id="Main" Title="Rocket League Account Switcher" Level="1">
+    <!-- Core app: the exe plus the Start menu shortcut. Always installed. -->
+    <Feature Id="Main" Title="Rocket League Account Switcher" Level="1"
+             AllowAbsent="no" Display="expand">
       <Component Directory="INSTALLFOLDER">
         <File Id="AppExe" Source="..\publish\app\RLSwitcher.exe" KeyPath="yes" />
       </Component>
@@ -36,6 +53,21 @@
                   WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
         <RemoveFolder Id="RemoveShortcutFolder" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\RLSwitcher" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </Feature>
+
+    <!-- Optional: the desktop shortcut. Shows as its own tick in Custom Setup,
+         on by default, and the user can turn it off. -->
+    <Feature Id="DesktopShortcut" Title="Desktop shortcut"
+             Description="Add a shortcut to Rocket League Account Switcher on the desktop."
+             Level="1" AllowAdvertise="no">
+      <Component Directory="DesktopFolder" Guid="*">
+        <Shortcut Id="DesktopShortcut"
+                  Name="Rocket League Account Switcher"
+                  Target="[#AppExe]"
+                  WorkingDirectory="INSTALLFOLDER" Icon="AppIcon" />
+        <RegistryValue Root="HKCU" Key="Software\RLSwitcher" Name="desktopShortcut"
                        Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </Feature>
