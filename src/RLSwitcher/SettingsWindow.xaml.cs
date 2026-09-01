@@ -31,6 +31,34 @@ public partial class SettingsWindow
         ArgsBox.Text = settings.ExtraLaunchArgs ?? "";
         RefreshVaultStatus();
         LogBox.Text = Log.Tail(200);
+
+        VersionText.Text = "Current version: " + Updater.CurrentDisplay;
+        LastCheckedText.Text = Updater.LastCheckedText(_settings.LastUpdateCheckUtc);
+    }
+
+    // --- Updates ---
+
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        CheckUpdateButton.IsEnabled = false;
+        try
+        {
+            var info = await Updater.CheckAsync(_settings);
+            LastCheckedText.Text = Updater.LastCheckedText(_settings.LastUpdateCheckUtc);
+
+            if (info is null)
+            {
+                await Notify.InfoAsync("Up to date", $"You're on the latest version ({Updater.CurrentDisplay}).");
+                return;
+            }
+
+            if (await Updater.PromptAndRunAsync(info))
+                System.Windows.Application.Current.Shutdown();
+        }
+        finally
+        {
+            CheckUpdateButton.IsEnabled = true;
+        }
     }
 
     // --- Diagnostics ---

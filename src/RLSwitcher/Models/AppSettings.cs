@@ -17,4 +17,7 @@ public sealed class AppSettings
 
     /// <summary>Id of the account launched most recently, highlighted as active.</summary>
     public string? ActiveAccountId { get; set; }
+
+    /// <summary>When the app last checked GitHub for a newer release.</summary>
+    public DateTimeOffset? LastUpdateCheckUtc { get; set; }
 }

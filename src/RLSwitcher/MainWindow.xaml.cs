@@ -45,52 +45,28 @@ public partial class MainWindow
         _ = CheckForUpdatesAsync();
     }
 
+    // Holds the update found by the startup check, so the banner's button knows what to install.
+    private UpdateInfo? _pendingUpdate;
+
     private async Task CheckForUpdatesAsync()
     {
-        try
-        {
-            var current = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version
-                          ?? new Version(0, 0, 0, 0);
-            var info = await UpdateChecker.CheckAsync(current);
-            if (info is null) return;
+        var info = await Updater.CheckAsync(_settings);
+        if (info is null) return;
+        ShowUpdateBanner(info);
+    }
 
-            // If the release ships an MSI, install it in place: download, run the
-            // installer, and close so it can replace the running files. The user
-            // just reopens the app afterwards. No MSI (or install fails) falls back
-            // to opening the download page.
-            if (!string.IsNullOrEmpty(info.MsiUrl))
-            {
-                var go = await Notify.ConfirmAsync("Update available",
-                    $"{info.Tag} is out. You're on {current.ToString(3)}.\n\n" +
-                    "Download and install it now? RLSwitcher will close while the installer runs, then you can reopen it.",
-                    confirmText: "Update now", cancelText: "Later");
-                if (!go) return;
+    private void ShowUpdateBanner(UpdateInfo info)
+    {
+        _pendingUpdate = info;
+        UpdateBanner.Message = $"{info.Tag} is available. You're on {Updater.CurrentDisplay}.";
+        UpdateBanner.IsOpen = true;
+    }
 
-                try
-                {
-                    Notify.Toast("Updating", "Downloading the installer…");
-                    if (await UpdateChecker.DownloadAndRunAsync(info))
-                    {
-                        System.Windows.Application.Current.Shutdown();
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warn("Auto-update failed; falling back to the download page.", ex);
-                    await Notify.InfoAsync("Update", "Couldn't install automatically: " + ex.Message +
-                        "\n\nOpening the download page instead.");
-                    OpenUrl(info.PageUrl);
-                }
-                return;
-            }
-
-            var open = await Notify.ConfirmAsync("Update available",
-                $"{info.Tag} is out. You're on {current.ToString(3)}.\n\nOpen the download page?",
-                confirmText: "Open page", cancelText: "Later");
-            if (open) OpenUrl(info.PageUrl);
-        }
-        catch (Exception ex) { Log.Warn("Update check failed.", ex); }
+    private async void UpdateBanner_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdate is null) return;
+        if (await Updater.PromptAndRunAsync(_pendingUpdate))
+            System.Windows.Application.Current.Shutdown();
     }
 
     private static void OpenUrl(string? url)
