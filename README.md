@@ -106,4 +106,4 @@ The account login is based on the OAuth approach from [Slipstream](https://githu
 
 ---
 
-<sub>Coded with Claude Opus 4.8.</sub>
+<sub>Coded with Claude Opus 5.5.</sub>
